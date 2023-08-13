@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">PridesApp</string>
+    <string name="empresaabc">Empresa ABC S.A</string>
+    <string name="hola">Hola!</string>
+    <string name="ingreseNombreUsuario">Ingrese su nombre de Usuario</string>
+    <string name="usuario">Usuario</string>
+    <string name="inicio">Inicio</string>
+    <string name="nombreUsuario">Nombre de usuario</string>
+    <string name="title_activity_notification">NotificationActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="admin">-ADMIN-</string>
+    <string name="tipoDeCambioHoy">Tipo de cambio para el día de hoy</string>
+    <string name="compra">Compra</string>
+    <string name="venta">Venta</string>
+    <string name="infoClimaticaActual">Información climática actual</string>
+    <string name="temperatura">Temperatura Actual</string>
+    <string name="condicion">Condición</string>
+    <string name="region">Región</string>
+    <string name="amanecer">Amanecer</string>
+    <string name="anochecer">Anochecer</string>
+    <string name="notificar">Notificar</string>
+</resources>
