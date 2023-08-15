@@ -75,6 +75,7 @@ class NotificationActivity : AppCompatActivity() {
             // Primero se llama a pedir la ubicación y una vez ya obtenida se envía la solicitud
             // a OpenWeather por mi ubicación actual
             requestLocation()
+           // ReadWeather()
         }
 
         binding.btnNotificar.setOnClickListener{
@@ -240,6 +241,7 @@ class NotificationActivity : AppCompatActivity() {
 
     // Llama al WS de los datos del estado del tiempo
     private fun ReadWeather() {
+
         val url = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}"
         val postResquest = StringRequest(
             Request.Method.GET, url,
@@ -369,6 +371,13 @@ class NotificationActivity : AppCompatActivity() {
                         ReadWeather()
                     }
                 }
+
+            // Si no puede obtener la ubicación, se establece la ubicación brindada de San Jose por defecto.
+            if(lat == 0.0 || lon == 0.0){
+                lat = 9.937671
+                lon = -84.096974
+                ReadWeather()
+            }
         } else {
             ActivityCompat.requestPermissions(
                 this,
