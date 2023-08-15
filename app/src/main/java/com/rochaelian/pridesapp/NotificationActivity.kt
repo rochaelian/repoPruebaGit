@@ -1,15 +1,19 @@
 package com.rochaelian.pridesapp
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.AsyncTask
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.Request
 import com.android.volley.toolbox.Volley
@@ -26,10 +30,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import android.Manifest
+import android.widget.Toast
 
 class NotificationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityNotificationBinding
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     // VARIABLES DE LAS SOLICITUDES A BCCR
     val compra = 317
@@ -42,8 +51,8 @@ class NotificationActivity : AppCompatActivity() {
 
     // VARIABLES DE OPEN WEATHER
     val apiKey = "45accf76a3c1bcb40bdda8c34d8c5455"
-    val lat = 9.937671
-    val lon = -84.096974
+    private var lat = 0.0
+    private var lon = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -52,18 +61,23 @@ class NotificationActivity : AppCompatActivity() {
         setContentView(binding.root)
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         val usuario = intent.getStringExtra("Usuario")
         binding.tvUsuario.setText(usuario)
 
-        // Al hacer consultas a WS se utilizan corrutinas para agilizar el proceso de carga principal de la pantalla
+
+        // Verifica si el usuario ha dado permisos de ubicacion para hacer los llamados a los apis
         CoroutineScope(Dispatchers.IO).launch {
             solicitarIndicadores(compra)
             solicitarIndicadores(venta)
-            ReadWeather()
+
+            // Primero se llama a pedir la ubicación y una vez ya obtenida se envía la solicitud
+            // a OpenWeather por mi ubicación actual
+            requestLocation()
         }
 
         binding.btnNotificar.setOnClickListener{
-            Log.d("PRUEBANOMBRE", "USUARIO: $usuario")
             notoficar(usuario!!)
         }
     }
@@ -226,7 +240,6 @@ class NotificationActivity : AppCompatActivity() {
 
     // Llama al WS de los datos del estado del tiempo
     private fun ReadWeather() {
-
         val url = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}"
         val postResquest = StringRequest(
             Request.Method.GET, url,
@@ -237,7 +250,7 @@ class NotificationActivity : AppCompatActivity() {
                     val weatherResponse = gson.fromJson(response, WeatherResponse::class.java)
 
                     // Setar los parámetros de respuesta en los campos correspondientes de la pantalla
-                    setParamsWeather(weatherResponse.main.temp, weatherResponse.sys.country, weatherResponse.sys.sunrise, weatherResponse.sys.sunset, weatherResponse.weather[0].description)
+                    setParamsWeather(weatherResponse.main.temp, weatherResponse.sys.country, weatherResponse.name, weatherResponse.sys.sunrise, weatherResponse.sys.sunset, weatherResponse.weather[0].description)
                     setIconWeather(weatherResponse.weather[0].icon)
 
                 } catch (e: JSONException) {
@@ -249,7 +262,7 @@ class NotificationActivity : AppCompatActivity() {
     }
 
     // Setar los parámetros de respuesta en los campos correspondientes de la pantalla
-    private fun setParamsWeather(temp:Double, region:String, sunrise:Long, sunset:Long, description:String){
+    private fun setParamsWeather(temp:Double, region:String, nameLocation:String, sunrise:Long, sunset:Long, description:String){
 
         val tempCelcius = (temp - 273.15).toString()
 
@@ -262,7 +275,7 @@ class NotificationActivity : AppCompatActivity() {
 
         binding.tvTemp.setText(tempCelcius.substring(0,2))
         binding.tvWeatherDescription.setText(description)
-        binding.tvRegion.setText(region)
+        binding.tvRegion.setText("$region, $nameLocation")
         binding.tvSunrise.setText(formattedSunrise)
         binding.tvSunset.setText(formattedSunset)
     }
@@ -329,8 +342,59 @@ class NotificationActivity : AppCompatActivity() {
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI)
 
-        val notificationId = /* Assign a unique notification ID */
+        val notificationId =
             notificationManager.notify(101, notificationBuilder.build())
+    }
+
+
+
+    // Funciones de localización
+
+    private fun checkLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestLocation() {
+        if (checkLocationPermission()) {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        lat = location.latitude
+                        lon = location.longitude
+                        ReadWeather()
+                    }
+                }
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    // Para manejar el resultado de los permisos de ubicacion
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestLocation()
+            } else {
+                Toast.makeText(this, "Debe dar permisos de ubicación a la aplicación.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 123
     }
 }
