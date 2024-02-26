@@ -75,7 +75,6 @@ class NotificationActivity : AppCompatActivity() {
             // Primero se llama a pedir la ubicación y una vez ya obtenida se envía la solicitud
             // a OpenWeather por mi ubicación actual
             requestLocation()
-           // ReadWeather()
         }
 
         binding.btnNotificar.setOnClickListener{
@@ -372,7 +371,7 @@ class NotificationActivity : AppCompatActivity() {
                     }
                 }
 
-            // Si no puede obtener la ubicación, se establece la ubicación brindada de San Jose por defecto.
+            // En casi de no obtener la ubicación, se establece la ubicación brindada de San Jose por defecto.
             if(lat == 0.0 || lon == 0.0){
                 lat = 9.937671
                 lon = -84.096974
