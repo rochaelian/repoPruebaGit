@@ -352,6 +352,7 @@ class NotificationActivity : AppCompatActivity() {
 
 
     // Funciones de localización
+    // skjdfblasr
 
     private fun checkLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
